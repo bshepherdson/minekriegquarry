@@ -1,0 +1,83 @@
+local PORT = 847
+
+local inventoryPeriod
+local clearingAllowed = false
+
+-- Find the modem
+local sides = { 'right', 'left', 'front', 'back', 'top', 'bottom' }
+local modem
+for i, side in pairs(sides) do
+  if peripheral.getType(side) == 'modem' then
+    modem = peripheral.wrap(side)
+    break
+  end
+end
+
+if not modem then
+  print('Error: No modem found!')
+  return
+end
+
+modem.open(PORT)
+
+function clearInv()
+  if not clearingAllowed then return end
+
+  for i = 1,16 do
+    turtle.select(i)
+    turtle.dropDown()
+  end
+  turtle.select(1)
+end
+
+function recoverMiner()
+  turtle.select(1)
+  while turtle.getItemCount(1) > 0 do
+    clearInv()
+  end
+  turtle.dig()
+end
+
+function placeMiner()
+  turtle.select(1)
+  turtle.place()
+end
+
+
+function update(content)
+  if fs.exists('/newversion') then
+    fs.delete('/newversion')
+  end
+
+  local fh = fs.open('/newversion', 'w')
+  fh.write(content)
+  fh.close()
+  os.reboot()
+end
+
+
+-- loop waiting for messages
+while true do
+  event, p1, p2, p3, p4, p5 = os.pullEvent()
+  if event == 'timer' then
+    clearInv()
+    os.startTimer(inventoryPeriod)
+  elseif event == 'modem_message' then
+    local msg = textutils.unserialize(p4)
+
+    if msg.type == 'dig' then
+      placeMiner()
+      inventoryPeriod = msg.period
+      os.startTimer(inventoryPeriod)
+      clearingAllowed = true
+    elseif msg.type == 'recovery' then
+      clearingAllowed = false
+      recoverMiner()
+    elseif msg.type == 'update' then
+      update(msg.content)
+    else
+      print('Unrecognized message type "' .. msg.type .. '"')
+    end
+  end
+end
+

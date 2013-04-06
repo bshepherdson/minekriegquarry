@@ -1,0 +1,30 @@
+local PORT = 847
+-- Read in the contents of the turtle file.
+
+local fh = fs.open('turtle', 'r')
+local payload = fh.readAll()
+fh.close()
+
+-- Find the modem
+local sides = { 'right', 'left', 'front', 'back', 'top', 'bottom' }
+local modem
+for i, side in pairs(sides) do
+  if peripheral.getType(side) == 'modem' then
+    modem = peripheral.wrap(side)
+    break
+  end
+end
+
+if not modem then
+  print('Error: No modem found!')
+  return
+end
+
+local msg = { }
+msg.type = 'update'
+msg.content = payload
+
+modem.transmit(PORT, 1, textutils.serialize(msg))
+
+print('Update sent')
+

@@ -1,0 +1,93 @@
+local PORT = 847
+local MOTOR_WIRE_SIDE = 'right'
+
+-- Find the modem
+local sides = { 'right', 'left', 'front', 'back', 'top', 'bottom' }
+local modem
+for i, side in pairs(sides) do
+  if peripheral.getType(side) == 'modem' then
+    modem = peripheral.wrap(side)
+    break
+  end
+end
+
+if not modem then
+  print('Error: No modem found!')
+  return
+end
+
+-- Check for all configuration files.
+if not fs.isDir('/quarry/config') then
+  print('Configuration directory missing')
+  return
+end
+
+function checkFile(file)
+  if not fs.exists('/quarry/config/'..file) then
+    print('Missing configuration file: ' .. file)
+    return false
+  end
+  return true
+end
+
+local filesPresent = checkFile('movetime') and checkFile('digtime') and checkFile('inventoryperiod') and checkFile('recoverytime') and checkFile('repeat')
+if not filesPresent then return end
+
+-- Returns the number found within the given file.
+function readFile(file)
+  local fh = fs.open(file, 'r')
+  local s = fh.readAll()
+  fh.close()
+  return tonumber(s)
+end
+
+-- Advances the platform one block.
+function movePlatform()
+  -- Send the redstone signal to start the move.
+  redstone.setOutput(MOTOR_WIRE_SIDE, true)
+  os.sleep(0.4)
+  redstone.setOutput(MOTOR_WIRE_SIDE, false)
+  os.sleep(readFile('/quarry/config/movetime'))
+end
+
+
+-- Orders the turtles to begin digging.
+function dig()
+  -- Send the order to the turtles.
+  local period = readFile('/quarry/config/inventoryperiod')
+  local digtime = readFile('/quarry/config/digtime')
+
+  local msg = {}
+  msg.type = 'dig'
+  msg.period = period
+
+  modem.transmit(PORT, 1, textutils.serialize(msg))
+  os.sleep(digtime)
+end
+
+
+-- Orders the turtles to recover their wells.
+function recover()
+  local recoverytime = readFile('/quarry/config/recoverytime')
+
+  local msg = {}
+  msg.type = 'recovery'
+
+  modem.transmit(PORT, 1, textutils.serialize(msg))
+  os.sleep(recoverytime)
+end
+
+
+local repetitions = readFile('/quarry/config/repetitions')
+local infinite = repetitions == 0
+
+local i = 1
+while infinite or i <= repetitions do
+  print('Beginning iteration ' .. i)
+  movePlatform()
+  dig()
+  recover()
+  i = i + 1
+end
+
+print('Complete')

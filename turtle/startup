@@ -1,0 +1,7 @@
+if fs.exists('/newversion') then
+  fs.delete('/quarry')
+  fs.move('/newversion', '/quarry')
+end
+
+shell.run('quarry')
+

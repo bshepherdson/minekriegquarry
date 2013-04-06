@@ -50,7 +50,7 @@ Start digging, and clear inventory every `period` seconds.
 
 ### Updated software delivery
 
-    { type: 'update', url: string }
+    { type: 'update', content: string }
 
 Sends a new copy of the software to be installed. The software should write the `content` to the file `/newversion` and then `os.reboot()`.
 

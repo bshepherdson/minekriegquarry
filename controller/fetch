@@ -1,0 +1,16 @@
+
+function fetch(url, target)
+  print('Downloading ' .. url .. ' to ' .. target)
+  local req = http.get(url)
+  local fh = fs.open(target, 'w')
+  fh.write(req.readAll())
+  fh.close()
+  req.close()
+end
+
+local root = 'http://shepherdson.homeip.net:5905/quarry/'
+fetch(root .. 'controller/quarrycontrol', 'quarrycontrol')
+fetch(root .. 'controller/update', 'update')
+fetch(root .. 'turtle/quarry', 'turtle')
+
+
