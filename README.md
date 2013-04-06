@@ -11,7 +11,7 @@ One complete sequence of operations runs as follows:
     - Wait (two seconds?) for this to be completed.
     - This wait time lives in `quarry/config/movetime`
 - Signal the turtles to begin their digging.
-    - Wireless signal on channel 666.
+    - Wireless signals on channel 847 (sum of the ASCII values for `FRAMEQUARRY`).
     - Turtles do the following:
         - Place their diggers (from slot 1)
         - Repeatedly clear their inventories. The period for clearing the inventory is given as a parameter in the message to start digging.
